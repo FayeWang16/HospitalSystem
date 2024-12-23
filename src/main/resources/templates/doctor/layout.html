@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title>Layout</title>
+        <link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+        <link rel="stylesheet" type="text/css" th:href="@{/layui/css/layui.css}"/>
+        <script th:src="@{/layui/layui.js}"></script>
+        <script th:src="@{/js/fetch-wrapper.js}"></script>
+    </head>
+    <body>
+        <div style="height: 100vh;overflow: auto;">
+            <div class="head">
+                <img class="logo" th:src="@{/images/word-logo.png}" >
+                <div style="display: flex;align-items: center;gap: 20px;">
+                    <div style="font-size: 22px;cursor: pointer;" th:text="'Hi ' + ${session.user.name}"></div>
+                    <div style="font-size: 22px;cursor: pointer;" onclick="toLogout()">logout</div>
+                </div>
+            </div>
+            <div style="display: flex;">
+                <div style="width: 260px;height: calc(100vh - 80px);overflow: auto;background-color: #e2e9f9;border-right: 1px solid #eee;">
+                    <ul class="layui-menu"></ul>
+                </div>
+                <iframe id="content-frame" src="" style="flex-grow: 1; height: calc(100vh - 80px); border: none;"></iframe>
+            </div>
+
+        </div>
+        <style>
+            #content {
+                padding: 20px;
+                flex: 1;
+            }
+            .logo {
+                height: 100%;
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .layui-menu {
+                margin: 0;
+            }
+            .head {
+                position: relative;
+                height: 80px;
+                background: #e2e9f9;
+                display: flex;
+                padding: 0 50px;
+                justify-content: flex-end;
+                gap: 40px;
+                align-items: center;
+            }
+        </style>
+        <script>
+            const toLogout = () => {
+                window.location.href = '/logout'
+            }
+            layui.use(async function(){
+                const $ = layui.jquery
+                const layer = layui.layer
+                const element = layui.element
+                const { data } = await getRequest('/getRole')
+                if (data === 'patient') {
+                    $('.layui-menu').html(`
+                         <li>
+                          <div class="layui-menu-body-title">
+                            <a href="javascript:;" data-url="/doctor/appointment">View My Appointments</a>
+                          </div>
+                        </li>
+                        <li class="layui-nav-item">
+                          <div class="layui-menu-body-title">
+                            <a href="javascript:;">Search My Appointments</a>
+                          </div>
+                        </li>
+                    `)
+                } else {
+                    $('.layui-menu').html(`
+                         <li>
+                           <div class="layui-menu-body-title">
+                            <a href="javascript:;" data-url="/doctor/patient">View Assigned Patient</a>
+                           </div>
+                        </li>
+                        <li>
+                            <a href="javascript:;">Search Patient</a>
+                        </li>
+                    `)
+                }
+                $('.layui-menu-body-title > a').on('click', function () {
+                    const url = $(this).data('url')
+                    if (!url) return
+                    $('#content-frame').attr('src', url)
+                    // $('#content').load(url, () => {
+                    //     element.init()
+                    // })
+                })
+            })
+        </script>
+    </body>
+</html>
