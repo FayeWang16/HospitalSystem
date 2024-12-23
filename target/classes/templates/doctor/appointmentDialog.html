@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <title></title>
+        <link rel="stylesheet" type="text/css" th:href="@{/css/common.css}"/>
+        <link rel="stylesheet" type="text/css" th:href="@{/layui/css/layui.css}"/>
+        <script th:src="@{/layui/layui.js}"></script>
+        <script th:src="@{/js/fetch-wrapper.js}"></script>
+    </head>
+    <body>
+        <div style="padding: 20px;">
+            <div class="layui-form">
+                <input type="text" th:value="${appointment?.id}" name="id" style="display: none" autocomplete="off" class="layui-input">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">Date</label>
+                    <div class="layui-input-block">
+                        <input type="text" th:value="${appointment?.date}" name="date" required readonly lay-verify="required" placeholder="Please enter the date" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">Patient</label>
+                    <div class="layui-input-block">
+                        <select disabled th:value="${appointment?.patientId}" lay-verify="required" name="patientId" id="patient">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">Doctor</label>
+                    <div class="layui-input-block">
+                        <select disabled th:value="${appointment?.doctorId}" lay-verify="required" name="doctorId" id="doctor">
+                            <option></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">symptoms</label>
+                    <div class="layui-input-block">
+                        <input  type="text" th:value="${appointment?.symptoms}" name="symptoms" required lay-verify="required" placeholder="Please enter the symptoms" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">Prescriptions</label>
+                    <div class="layui-input-block">
+                        <input type="text" th:value="${appointment?.prescriptions}" name="prescriptions" required lay-verify="required" placeholder="Please enter the prescriptions" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="formSubmit">Submit</button>
+<!--                        <button type="reset" class="layui-btn layui-btn-primary">Reset</button>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            window.onload = () => {
+                const layer = layui.layer
+                let search = window.location.search
+                let form = null
+                layui.use(async function() {
+                    form = layui.form
+                    form.on('submit(formSubmit)', async function(data){
+                        let param = data.field
+                        data.field.id ? Reflect.set(param, 'id', data.field.id) : Reflect.deleteProperty(param, 'id')
+                        let res
+                        try {
+                            if (search) {
+                                res = await postRequest('/appointment/edit', param)
+                            } else {
+                                res = await postRequest('/appointment', param)
+                            }
+                        } catch (e) {
+                            console.log(e)
+                        }
+                        console.log(res)
+                        if (res.status == 200) {
+                            layer.msg(res.message, {
+                                icon: 1,
+                                time: 2000
+                            }, function() {
+                                debugger
+                                window.parent.location.reload()
+                                var index = window.parent.layer.getFrameIndex(window.name)
+                                window.parent.layer.close(index)
+                            })
+                        } else {
+                            layer.msg(res.message)
+                        }
+                        return false
+                    })
+                    const { data: userData } = await getRequest('/user/list')
+                    const { data: doctorData } = await getRequest('/doctor/list')
+                    const patientVal = document.querySelector('#patient').getAttribute('value')
+                    const doctorVal = document.querySelector('#doctor').getAttribute('value')
+                    let patientHtml = ''
+                    let doctorHtml = ''
+                    for (const user of userData) {
+                        if (user.id == patientVal) {
+                            patientHtml += `<option selected="selected" value="${user.id}">${user.name}</option>`
+                        } else {
+                            patientHtml += `<option value="${user.id}">${user.name}</option>`
+                        }
+                    }
+                    for (const doctor of doctorData) {
+                        if (doctor.id == doctorVal) {
+                            doctorHtml += `<option selected="selected" value="${doctor.id}">${doctor.name}</option>`
+                        } else {
+                            doctorHtml += `<option value="${doctor.id}">${doctor.name}</option>`
+                        }
+                    }
+                    document.querySelector('#patient').insertAdjacentHTML('beforeend', patientHtml)
+                    document.querySelector('#doctor').insertAdjacentHTML('beforeend', doctorHtml)
+                    form.render('select')
+                })
+
+            }
+        </script>
+        <style>
+            select {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                background-image: none;
+            }
+        </style>
+    </body>
+</html>
